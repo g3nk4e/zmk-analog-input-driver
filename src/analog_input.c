@@ -175,6 +175,7 @@ static void sampling_timer_handler(struct k_timer *timer) {
     struct analog_input_data *data = CONTAINER_OF(timer, struct analog_input_data, sampling_timer);
     // LOG_DBG("sampling timer triggered");
     k_work_submit_to_queue(&analog_input_work_q, &data->sampling_work);
+    
 }
 
 static int active_set_value(const struct device *dev, bool active) {
