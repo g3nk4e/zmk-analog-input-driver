@@ -295,7 +295,7 @@ static void analog_input_async_init(struct k_work *work) {
         .buffer_size = buff_size,
         .oversampling = 0,
         .resolution = 12,
-        .calibrate = true,
+        .calibrate = false,
     };
 
 #ifdef CONFIG_ADC_ASYNC
