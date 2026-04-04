@@ -36,34 +36,22 @@ static int analog_input_report_data(const struct device *dev) {
     struct adc_sequence* as = &data->as;
 
     for (uint8_t i = 0; i < config->io_channels_len; i++) {
-        struct analog_input_io_channel ch_cfg = (struct analog_input_io_channel)config->io_channels[i];
-        const struct device* adc = ch_cfg.adc_channel.dev;
+    struct analog_input_io_channel ch_cfg = (struct analog_input_io_channel)config->io_channels[i];
+    const struct device* adc = ch_cfg.adc_channel.dev;
 
-        if (i == 0) {
-#ifdef CONFIG_ADC_ASYNC
-            int err = adc_read_async(adc, as, &data->async_sig);
-            if (err < 0) {
-                LOG_ERR("AIN%u read_async returned %d", i, err);
-                return err;
-            }
-            err = k_poll(&data->async_evt, 1, K_FOREVER);
-            if (err < 0) {
-                LOG_ERR("AIN%u k_poll returned %d", i, err);
-                return err;
-            }
-            if (!data->async_evt.signal->signaled) {
-                return 0;
-            }
-            data->async_evt.signal->signaled = 0;
-    	    data->async_evt.state = K_POLL_STATE_NOT_READY;
-#else
-            int err = adc_read(adc, as);
-            if (err < 0) {
-                LOG_ERR("AIN%u read returned %d", i, err);
-                return err;
-            }
-#endif
-        }
+    struct adc_sequence as_single = {
+        .channels = BIT(ch_cfg.adc_channel.channel_id),
+        .buffer = &data->as_buff[i],
+        .buffer_size = sizeof(uint16_t),
+        .oversampling = 0,
+        .resolution = 12,
+        .calibrate = false,
+    };
+    int err = adc_read(adc, &as_single);
+    if (err < 0) {
+        LOG_ERR("AIN%u read returned %d", i, err);
+        return err;
+    }
 
         int32_t raw = data->as_buff[i];
         int32_t mv = raw;
